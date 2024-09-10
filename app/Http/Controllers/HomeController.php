@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\City;
+use App\Courier;
 use App\Province;
 use Illuminate\Http\Request;
+use Kavist\RajaOngkir\Facades\RajaOngkir;
 
 class HomeController extends Controller
 {
@@ -26,7 +28,37 @@ class HomeController extends Controller
     public function index()
     {
         $province = $this->getProvince();
-        return view('home', compact('province'));
+        $courier = $this->getCourier();
+        return view('home', compact('province', 'courier'));
+    }
+
+    public function store(Request $request) 
+    {
+        $courier = $request->input('courier');
+
+        if ($courier) {
+            $result = [];
+
+            foreach ($courier as $row ) {
+                $ongkir = RajaOngkir::ongkosKirim([
+                    'origin'        => $request->origin_city,     // ID kota/kabupaten asal
+                    'destination'   => $request->destination_city,      // ID kota/kabupaten tujuan
+                    'weight'        => 1300,    // berat barang dalam gram
+                    'courier'       => $row,    // kode kurir pengiriman: ['jne', 'tiki', 'pos'] untuk starter
+                ])->get();
+
+                $result[] = $ongkir;
+            }
+        }
+
+        return $result;
+        // dd($request ->all());
+        // dd($ongkir);   
+    }
+
+    public function getCourier() 
+    {
+        return Courier::all();
     }
 
     public function getProvince()
